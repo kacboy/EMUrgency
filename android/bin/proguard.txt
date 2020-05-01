@@ -1,6 +1,0 @@
-# view res/layout/main.xml #generated:1
--keep class .EMUrgency { <init>(...); }
-
-# view AndroidManifest.xml #generated:5
--keep class processing.test.emurgency.MainActivity { <init>(...); }
-

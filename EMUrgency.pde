@@ -1,10 +1,12 @@
 import android.os.Environment;
 import apwidgets.*;
+import processing.sound.*;
 
 //sound
-//APMediaPlayer audio;
-int music;
-int sfx;
+SoundFile musicFile;
+//SoundFile airSound;
+boolean music=true;
+boolean sfx=true;
 
 //saving
 String directory = new String(Environment.getExternalStorageDirectory().getAbsolutePath()) + "/EMUrgency";
@@ -51,13 +53,7 @@ void setup() {
   //size(480, 853);
   //size(540, 960);
   //size(480, 720);
-
-  //sound
-  //audio = new APMediaPlayer(this); //create new APMediaPlayer 
-  //audio.setMediaFile("aquanaut.mp4"); //set the file (files are in data folder) 
-  //audio.start(); //start play back 
-  //audio.setLooping(true); //restart playback end reached
-  //audio.setVolume(1.0, 1.0); //Set left and right volumes. Range is from 0.0 to 1.0
+  frameRate(30); //<--check player acceleration if you change this
 
   //font
   //nokia = loadFont("nokia.vlw");
@@ -117,7 +113,14 @@ void setup() {
   meteor3.resize(width/3, 0);
   meteor4.resize(width/3, 0);
 
+  //sound
+  //airSound = new SoundFile(this, "blip.mp3");
+  musicFile = new SoundFile(this, "aquanaut.mp3");
   loadData();
+  if (!musicFile.isPlaying()&&(music)) {
+    musicFile.jump(random(0,119));
+    musicFile.loop();
+  }
 
   //background
   earth=loadImage("earth.png");
@@ -133,12 +136,6 @@ void setup() {
 }
 
 void draw() { 
-  //sound
-  if (music==1) {
-    //audio.start(); //start play back 
-    //audio.setLooping(true); //restart playback end reached
-  }
-
   //background
   background(0);
   for (int s=0; s<stars.size(); s++) {
@@ -165,7 +162,7 @@ void draw() {
   //gameState changes
   if (player.health==-1) gameState=-1;
 
-  println("music:"+music+" sfx:"+sfx+"g ameState:"+gameState+" obstacles:"+obstacle.size(), "dodged:"+dodged, "obstacleMax:"+obstacleMax, "obstacleMax/2:"+obstacleMax/2);
+  println("music:"+music+" sfx:"+sfx+" gameState:"+gameState+" obstacles:"+obstacle.size(), "dodged:"+dodged, "obstacleMax:"+obstacleMax);
 }
 
 void obstacleSpawn() {
@@ -189,7 +186,7 @@ void obstacleSpawn() {
     }
   }
   //obstacle drawing+hit
-  for (int o=0; o<obstacle.size(); o++) {
+  for (int o=obstacle.size()-1; o>=0; o--) {
     obstacle.get(o).update();
     obstacle.get(o).drawMe();
     //player hit
@@ -205,7 +202,7 @@ void obstacleSpawn() {
     }
   }
   //obstacle2 drawing+hit
-  for (int o=0; o<obstacle2.size(); o++) {
+  for (int o=obstacle2.size()-1; o>=0; o--) {
     obstacle2.get(o).update();
     obstacle2.get(o).drawMe();
     //player hit
@@ -234,11 +231,14 @@ void airSpawn() {
       }
   }
   //air drawing+hit
-  for (int a=0; a<air.size(); a++) {
+  for (int a=air.size()-1; a>=0; a--) {
     air.get(a).update();
     air.get(a).drawMe();
     //player hit
     if (player.detectHit(air.get(a)) && player.health!=-1 && (player.location.x!=width/2&&player.location.y!=height/4*3)) {
+      if ((sfx)) {
+        //airSound.play();
+      }
       if (player.health<=player.maxHealth-airTwo) player.health+=airOne; 
       else { 
         player.health=player.maxHealth;
@@ -249,11 +249,14 @@ void airSpawn() {
     }
   }
   //air2 drawing+hit
-  for (int a=0; a<air2.size(); a++) {
+  for (int a=air2.size()-1; a>=0; a--) {
     air2.get(a).update();
     air2.get(a).drawMe();
     //player hit
     if (player.detectHit(air2.get(a)) && player.health!=-1 && (player.location.x!=width/2&&player.location.y!=height/4*3)) {
+      if ((sfx)) {
+        //airSound.play();
+      }
       if (player.health<=player.maxHealth-airTwo) player.health+=airTwo;
       else { 
         player.health+=airTwo;
@@ -307,13 +310,14 @@ void HUD() {
     noStroke();
     rectMode(CORNER);
     if (Button("RESET", width/2-width/8, height-width/5, width/4, width/8)&&player.health<=0) {
+      musicFile.stop();
       gameState=0;
       spawnPack=0;
       setup();
     }
     text("AIR:00.0 | TIME:"+minutes+":"+nf(seconds, 2)+" | HS:"+minsHS+":"+nf(secsHS, 2), width/2, width/12);
   } else if (gameState==0) {
-    //start menux
+    //start menu
     logo();
     fill(255);
     text("TAP TO START", width/2, height/2);
@@ -346,6 +350,7 @@ void HUD() {
     player.health=player.maxHealth;
     rectMode(CORNER);
     if (Button("BACK", width/2-width/8, height-width/5, width/4, width/8)) {
+      musicFile.stop();
       gameState=0;
       setup();
     }
@@ -358,6 +363,7 @@ void HUD() {
     player.health=player.maxHealth;
     rectMode(CORNER);
     if (Button("BACK", width/2-width/8, height-width/5, width/4, width/8)) {
+      musicFile.stop();
       gameState=0;
       setup();
     }
@@ -370,6 +376,7 @@ void HUD() {
     player.health=player.maxHealth;
     rectMode(CORNER);
     if (Button("BACK", width/2-width/8, height-width/5, width/4, width/8)) {
+      musicFile.stop();
       gameState=0;
       setup();
     }
@@ -411,25 +418,33 @@ void settingsMenu() {
   rectMode(CORNER);
   imageMode(CORNER);
   if (Button("MUSIC", width/4, height/2-width/5, width/4, width/8)) {
-    if (music==1) {
-      music=0;
-      //audio.pause();
-    } else music=1;
+    if ((music)) {
+      music=false;
+      musicFile.stop();
+    } else {
+      music=true;
+    }
+    if (!musicFile.isPlaying()){
+      musicFile.loop();
+    }
     minutes=-1;
     saveData();
   }
   if (Button("SOUNDS", width/4, height/2, width/4, width/8)) {
-    if (sfx==1) sfx=0;
-    else sfx=1;
-    minutes=-1;
-    saveData();
+    if ((sfx)) {
+      sfx=false;
+    } else {
+      sfx=true;
+      minutes=-1;
+      saveData();
+    }
   }
-  if (music==1) {
+  if ((music)) {
     image(sound2, width/2+width/12, height/2-width/5);
   } else {
     image(sound1, width/2+width/12, height/2-width/5);
   }
-  if (sfx==1) {
+  if ((sfx)) {
     image(sound2, width/2+width/12, height/2);
   } else {
     image(sound1, width/2+width/12, height/2);
@@ -445,7 +460,7 @@ void credits() {
   fill(255);
   textSize(width/25);
   text("CREDITS", width/2, width/12);
-  text("NO SOUND v1.0", width/2, height/2-width/10);
+  text("SOUND UPDATE v1.1", width/2, height/2-width/10);
   //text("VERSION 0."+((year()-2016)+(30*month()-8)+day()), width/2, height/2-width/10);
   text("EXTRAVEHICULAR MOBILITY UNIT", width/2, height/2-width/3); 
   textSize(width/30);
@@ -465,51 +480,49 @@ void logo() {
 }
 
 void loadData() {
-  //String[] data = loadStringsFromResourceNamed("data.txt"); 
-  //String data[] = loadStrings("data.txt");
-  //minsHS=int(data[0]);
-  //secsHS=int(data[1]);
-  String lines[];
-  File afile = new File(directory+"/"+myfn);
-  if (afile.exists()) {
-    lines = loadStrings(afile.getAbsoluteFile());
-    println(lines.length, lines);
-    if (lines.length==1) {
-      lines = split(lines[0], '$');
-    } 
-    minsHS=int(lines[1]);
-    secsHS=int(lines[2]);
-    music=int(lines[3]);
-    sfx=int(lines[4]);
-  } else {
-    lines=null;
-  }
+  ////String[] data = loadStringsFromResourceNamed("data.txt"); 
+  ////String data[] = loadStrings("data.txt");
+  ////minsHS=int(data[0]);
+  ////secsHS=int(data[1]);
+  //String lines[];
+  //File afile = new File(directory+"/"+myfn);
+  //if (afile.exists()) {
+  //  lines = loadStrings(afile.getAbsoluteFile());
+  //  println(lines.length, lines);
+  //  if (lines.length==1) {
+  //    lines = split(lines[0], '$');
+  //  } 
+  //  minsHS=int(lines[1]);
+  //  secsHS=int(lines[2]);
+  //  music=int(lines[3]);
+  //  sfx=int(lines[4]);
+  //} else {
+  //  lines=null;
+  //}
 }
 
 void saveData() {
-  if (minutes>=minsHS&&seconds>secsHS||minutes>minsHS||minutes==0&&seconds==0) {
-    String save = "$"+str(minutes)+"$"+str(seconds)+"$"+str(music)+"$"+str(sfx);
-    //String[] saved = split(save, '$');
-    //saveStrings("data.txt", saved);    
-    PrintWriter  output = createWriter(directory + "/" + "EMUrgency.txt"); 
-    output.println(save);
-    output.flush();
-    output.close();
-  } else if (minutes<0) {
-    String save = "$"+str(minsHS)+"$"+str(secsHS)+"$"+str(music)+"$"+str(sfx);
-    //String[] saved = split(save, '$');
-    //saveStrings("data.txt", saved);    
-    PrintWriter  output = createWriter(directory + "/" + "EMUrgency.txt"); 
-    output.println(save);
-    output.flush();
-    output.close();
-  }
+  //if (minutes>=minsHS&&seconds>secsHS||minutes>minsHS||minutes==0&&seconds==0) {
+  //  String save = "$"+str(minutes)+"$"+str(seconds)+"$"+str(music)+"$"+str(sfx);
+  //  //String[] saved = split(save, '$');
+  //  //saveStrings("data.txt", saved);    
+  //  PrintWriter  output = createWriter(directory + "/" + "EMUrgency.txt"); 
+  //  output.println(save);
+  //  output.flush();
+  //  output.close();
+  //} else if (minutes<0) {
+  //  String save = "$"+str(minsHS)+"$"+str(secsHS)+"$"+str(music)+"$"+str(sfx);
+  //  //String[] saved = split(save, '$');
+  //  //saveStrings("data.txt", saved);    
+  //  PrintWriter  output = createWriter(directory + "/" + "EMUrgency.txt"); 
+  //  output.println(save);
+  //  output.flush();
+  //  output.close();
+  //}
 }
 
-//The MediaPlayer must be released when the app closes public void onDestroy()
-//public void onDestroy() {
-//  super.onDestroy();
-//  if (audio != null) {
-//    audio.release();
-//  }
-//}
+//close the app
+void onPause() {
+  super.onPause();
+  System.exit(0);
+}

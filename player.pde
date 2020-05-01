@@ -63,7 +63,8 @@ class Player {
       PVector mouse = new PVector(mouseX, mouseY);
       PVector acceleration = PVector.sub(mouse, location);
       // Set magnitude of acceleration
-      acceleration.setMag(0.15*(width/480)); //<<-----needs to adjust depending on screen size;
+      //acceleration.setMag(0.15*(width/480)); //<<-----needs to adjust depending on screen size; this is for 60fps
+      acceleration.setMag(0.30*(width/480)); //<<-----needs to adjust depending on screen size; this is for 30fps
       // Velocity changes according to acceleration
       velocity.add(acceleration);
       // Limit the velocity by topspeed
